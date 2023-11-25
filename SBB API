@@ -1,15 +1,8 @@
 from datetime import datetime
 import dateutil
-
-# Force the Europe/Zurich timezone
-import time, os
-os.environ['TZ'] = 'Europe/Zurich'
-
-from datetime import datetime
-import dateutil
-
 import requests
 import json
+import streamlit as st
 
 class Connection:
     '''Connection class
@@ -44,8 +37,8 @@ class Connection:
         '''
         Method get_Unix_departure_time
         Returns the local time of departure as a Unix timestamp
-
-return int((self.departure_time - datetime(1970,1,1)).total_seconds())
+        '''
+        return int((self.departure_time - datetime(1970,1,1)).total_seconds())
 
     def get_unix_arrival_time(self):
         '''
@@ -53,3 +46,46 @@ return int((self.departure_time - datetime(1970,1,1)).total_seconds())
         Returns the local time of arrival as a Unix timestamp
         '''
         return int((self.arrival_time - datetime(1970,1,1)).total_seconds())
+
+# Streamlit App
+def main():
+    st.title("Zugverbindungen App")
+
+    origin = st.text_input("Abfahrtsort", value="Zürich")
+    destination = st.text_input("Zielort", value="Bern")
+    date = st.date_input("Datum")
+    time = st.time_input("Abfahrtszeit")
+
+    if st.button("Verbindungen finden"):
+        url = 'http://transport.opendata.ch/v1/connections'
+
+        params = {
+            'from': origin,
+            'to': destination,
+            'date': date.strftime("%Y-%m-%d"),
+            'time': time.strftime("%H:%M")
+        }
+
+        response = requests.get(url, params=params)
+
+        if response.status_code == 200:
+            connections = response.json()
+
+            if connections.get("connections"):
+                st.subheader("Gefundene Verbindungen:")
+                for connection in connections["connections"]:
+                    st.write(f"Abfahrt: {connection['from']['departure']}")
+                    st.write(f"Ankunft: {connection['to']['arrival']}")
+                    st.write(f"Reisezeit: {connection['duration']} Minuten")  # Reisezeit in Minuten
+                    st.write(f"Endbahnhof: {connection['to']['station']['name']}")  # Name des Endbahnhofs
+                    for section in connection['sections']:
+                        if section['journey']:
+                            journey = section['journey']
+                            st.write(f"Gleis: {journey['passList'][0]['platform']}")  # Gleisnummer
+            else:
+                st.write("Keine Verbindungen gefunden.")
+        else:
+            st.write("Fehler beim Abrufen der Verbindungen.")
+
+if __name__ == "__main__":
+    main()
