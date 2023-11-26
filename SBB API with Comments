@@ -1,0 +1,107 @@
+#Begin Code: Import all the necessary Data
+from datetime import datetime
+import dateutil
+import requests
+import json
+import streamlit as st
+
+#Define Class
+class Connection:
+    '''Connection class
+       A class that holds information about the transport means (e.g. the trains) and the times of a connection
+    '''
+    def __init__(self, destination_x, destination_y, departure, arrival, transport_means):
+        '''
+        Connection constructor
+        :param destination_x: the latitude of the destination
+        :param destination_y: the longitude of the destination
+        :param departure: a string containing the datetime for the departure
+        :param arrival: a string containing the datetime for the arrival
+        :param transport_means: a list of the transport means of the connection (e.g. ['IC 5'])
+        '''
+
+        # Create Validate input types
+        if (isinstance(destination_x,float) and isinstance(destination_y,float) and
+            isinstance(departure,str) and isinstance(arrival,str) and
+            isinstance(transport_means,list)):
+            # Initialize connection attributes
+            self.destination_x = destination_x
+            self.destination_y = destination_y
+            self.transport_means = transport_means
+
+            # Parse departure and arrival times using dateutil.parser
+            self.departure_time = dateutil.parser.parse(departure.split('+')[0])
+            self.arrival_time = dateutil.parser.parse(arrival.split('+')[0])
+        else:
+            raise AttributeError
+
+    def __str__(self):
+        return "{}: {}->{}".format(self.transport_means, self.departure_time, self.arrival_time)
+
+    def get_unix_departure_time(self):
+        '''
+        Method get_Unix_departure_time
+        Returns the local time of departure as a Unix timestamp
+        '''
+        return int((self.departure_time - datetime(1970,1,1)).total_seconds())
+
+    def get_unix_arrival_time(self):
+        '''
+        Method get_Unix_arrival_time
+        Returns the local time of arrival as a Unix timestamp
+        '''
+        return int((self.arrival_time - datetime(1970,1,1)).total_seconds())
+
+# Streamlit App
+def main():
+    # Streamlit app title
+    st.title("Zugverbindungen App")
+
+    # Input fields for origin, destination, date, and time
+    origin = st.text_input("Abfahrtsort", value="Zürich")
+    destination = st.text_input("Zielort", value="Bern")
+    date = st.date_input("Datum")
+    time = st.time_input("Abfahrtszeit")
+
+    # Button to trigger connection search
+    if st.button("Verbindungen finden"):
+        # OpenData API URL for connections
+        url = 'http://transport.opendata.ch/v1/connections'
+
+        # Parameters for the API request
+        params = {
+            'from': origin,
+            'to': destination,
+            'date': date.strftime("%Y-%m-%d"),
+            'time': time.strftime("%H:%M")
+        }
+
+        # Send API request
+        response = requests.get(url, params=params)
+
+        # Check if the request was successful (status code 200)
+        if response.status_code == 200:
+            # Parse JSON response
+            connections = response.json()
+
+            # Check if connections were found
+            if connections.get("connections"):
+                st.subheader("Gefundene Verbindungen:")
+                # Display information for each connection
+                for connection in connections["connections"]:
+                    st.write(f"Abfahrt: {connection['from']['departure']}")
+                    st.write(f"Ankunft: {connection['to']['arrival']}")
+                    st.write(f"Reisezeit: {connection['duration']} Minuten")  # Reisezeit in Minuten
+                    st.write(f"Endbahnhof: {connection['to']['station']['name']}")  # Name des Endbahnhofs
+                    for section in connection['sections']:
+                        if section['journey']:
+                            journey = section['journey']
+                            st.write(f"Gleis: {journey['passList'][0]['platform']}")  # Gleisnummer
+            else:
+                st.write("Keine Verbindungen gefunden.")
+        else:
+            st.write("Fehler beim Abrufen der Verbindungen.")
+
+if __name__ == "__main__":
+    main()
+
