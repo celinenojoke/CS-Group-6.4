@@ -1,9 +1,9 @@
-#Begin Code: Import all the necessary Data
+#Begin Code: Import the necessary Data
+import streamlit as st
 from datetime import datetime
 import dateutil
 import requests
 import json
-import streamlit as st
 
 #Define Class
 class Connection:
@@ -20,7 +20,7 @@ class Connection:
         :param transport_means: a list of the transport means of the connection (e.g. ['IC 5'])
         '''
 
-        # Create Validate input types
+        # Create validate input types
         if (isinstance(destination_x,float) and isinstance(destination_y,float) and
             isinstance(departure,str) and isinstance(arrival,str) and
             isinstance(transport_means,list)):
@@ -36,6 +36,7 @@ class Connection:
             raise AttributeError
 
     def __str__(self):
+        # String representation of the Connection object
         return "{}: {}->{}".format(self.transport_means, self.departure_time, self.arrival_time)
 
     def get_unix_departure_time(self):
@@ -54,7 +55,7 @@ class Connection:
 
 # Streamlit App
 def main():
-    # Streamlit app title
+    # Create streamlit app title
     st.title("Zugverbindungen App")
 
     # Input fields for origin, destination, date, and time
@@ -63,7 +64,7 @@ def main():
     date = st.date_input("Datum")
     time = st.time_input("Abfahrtszeit")
 
-    # Button to trigger connection search
+    # Build button to trigger connection search
     if st.button("Verbindungen finden"):
         # OpenData API URL for connections
         url = 'http://transport.opendata.ch/v1/connections'
@@ -104,4 +105,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
+#End Solution
