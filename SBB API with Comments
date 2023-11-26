@@ -100,7 +100,7 @@ def main():
                         if section['journey']:
                             journey = section['journey']
                             st.write(f"Plattform: {journey['passList'][0]['platform']}")  # Plattform
-                            ("---") #Trennstrich zwischen den einzelnen Verbindungen
+                            ("-" * 50) #hyphen to divide the results
             else:
                 st.write("No Connection Found.")
         else:
