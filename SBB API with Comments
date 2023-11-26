@@ -57,16 +57,16 @@ class Connection:
 # Streamlit App
 def main():
     # Create streamlit app title
-    st.title("Zugverbindungen App")
+    st.title("Public Transport Connection App")
 
     # Input fields for origin, destination, date, and time
-    origin = st.text_input("Abfahrtsort", value="St. Gallen")
-    destination = st.text_input("Zielort", value="Zürich")
-    date = st.date_input("Datum")
-    time = st.time_input("Abfahrtszeit")
+    origin = st.text_input("Point of Departure", value="St. Gallen")
+    destination = st.text_input("Point of Arrival", value="Zürich")
+    date = st.date_input("Date")
+    time = st.time_input("Time of Departure")
 
     # Build button to trigger connection search
-    if st.button("Verbindungen finden"):
+    if st.button("Search for Connections"):
         # OpenData API URL for connections
         url = 'http://transport.opendata.ch/v1/connections'
 
@@ -88,21 +88,23 @@ def main():
 
             # Check if connections were found
             if connections.get("connections"):
-                st.subheader("Gefundene Verbindungen:")
+                st.subheader("Found Connections:")
                 # Display information for each connection
-                for connection in connections["connections"]:
-                    st.write(f"Abfahrt: {connection['from']['departure']}")
-                    st.write(f"Ankunft: {connection['to']['arrival']}")
-                    st.write(f"Reisezeit: {connection['duration']} Minuten")  # Reisezeit in Minuten
-                    st.write(f"Endbahnhof: {connection['to']['station']['name']}")  # Name des Endbahnhofs
+                for index, connection in enumerate(connections["connections"], start=1):    #starts an enumiration for connections starting with 1
+                    st.write(f"**Connection {index}:**")    #connection as a key word with {index}
+                    st.write(f"Departure: {connection['from']['departure']}")
+                    st.write(f"Arrival: {connection['to']['arrival']}")
+                    st.write(f"Journey Time: {connection['duration']} Minuten")  # Journey Time
+                    st.write(f"Point of Arrival: {connection['to']['station']['name']}")  # Point of Arrival
                     for section in connection['sections']:
                         if section['journey']:
                             journey = section['journey']
-                            st.write(f"Gleis: {journey['passList'][0]['platform']}")  # Gleisnummer
+                            st.write(f"Plattform: {journey['passList'][0]['platform']}")  # Plattform
+                            ("---") #Trennstrich zwischen den einzelnen Verbindungen
             else:
-                st.write("Keine Verbindungen gefunden.")
+                st.write("No Connection Found.")
         else:
-            st.write("Fehler beim Abrufen der Verbindungen.")
+            st.write("Error Getting Gonnections.")
 
 if __name__ == "__main__":
     main()
