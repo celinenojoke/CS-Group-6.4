@@ -33,6 +33,7 @@ class Connection:
             self.departure_time = dateutil.parser.parse(departure.split('+')[0])
             self.arrival_time = dateutil.parser.parse(arrival.split('+')[0])
         else:
+            # Raise an attribute error if the input types are not valid
             raise AttributeError
 
     def __str__(self):
