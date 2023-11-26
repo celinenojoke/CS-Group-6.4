@@ -1,11 +1,11 @@
-#Begin Code: Import the necessary Data
+# Begin Code: Import the necessary Data
 import streamlit as st
 from datetime import datetime
 import dateutil
 import requests
 import json
 
-#Define Class
+# Define Class
 class Connection:
     '''Connection class
        A class that holds information about the transport means (e.g. the trains) and the times of a connection
@@ -105,4 +105,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-#End Solution
+# End Solution
