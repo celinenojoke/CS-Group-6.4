@@ -60,8 +60,8 @@ def main():
     st.title("Zugverbindungen App")
 
     # Input fields for origin, destination, date, and time
-    origin = st.text_input("Abfahrtsort", value="Zürich")
-    destination = st.text_input("Zielort", value="Bern")
+    origin = st.text_input("Abfahrtsort", value="St. Gallen")
+    destination = st.text_input("Zielort", value="Zürich")
     date = st.date_input("Datum")
     time = st.time_input("Abfahrtszeit")
 
