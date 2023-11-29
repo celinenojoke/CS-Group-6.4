@@ -1,3 +1,5 @@
+# Don't forget to install the google maps stuff for streamlit with: pip install -U googlemaps streamlit
+
 import streamlit as st
 import googlemaps
 
@@ -23,13 +25,13 @@ def get_distance_duration(origin, destination, mode="driving"):
         return str(e), None
 
 # Streamlit app
-st.title("Google Maps Distance Matrix API")
+st.title("Google Maps, Time and Distance")
 
 # User input for two locations
 origin = st.text_input("Enter origin location:")
 destination = st.text_input("Enter destination location:")
 
-if st.button("Calculate Distance"):
+if st.button("Calculate Time and Distance"):
     if origin and destination:
         # Get distance and duration
         distance, duration = get_distance_duration(origin, destination)
