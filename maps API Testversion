@@ -1,0 +1,43 @@
+import streamlit as st
+import googlemaps
+
+# Set your Google Maps API key
+api_key = "AIzaSyD75lrNDv2to1R4nmCNBLWqpIGy8mddNKU"
+gmaps = googlemaps.Client(key=api_key)
+
+def get_distance_duration(origin, destination, mode="driving"):
+    try:
+        # Make a request to the Google Maps Distance Matrix API
+        result = gmaps.distance_matrix(
+            origins=origin,
+            destinations=destination,
+            mode=mode
+        )
+
+        # Extract distance and duration from the API response
+        distance = result['rows'][0]['elements'][0]['distance']['text']
+        duration = result['rows'][0]['elements'][0]['duration']['text']
+
+        return distance, duration
+    except Exception as e:
+        return str(e), None
+
+# Streamlit app
+st.title("Google Maps Distance Matrix API")
+
+# User input for two locations
+origin = st.text_input("Enter origin location:")
+destination = st.text_input("Enter destination location:")
+
+if st.button("Calculate Distance"):
+    if origin and destination:
+        # Get distance and duration
+        distance, duration = get_distance_duration(origin, destination)
+
+        # Display the result
+        if distance and duration:
+            st.success(f"Distance: {distance}\nDuration: {duration}")
+        else:
+            st.error("Error fetching distance and duration. Please check your input and try again.")
+    else:
+        st.warning("Please enter both origin and destination locations.")
