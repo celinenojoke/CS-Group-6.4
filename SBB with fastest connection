@@ -1,0 +1,132 @@
+# Begin Code: Import the necessary Data
+import streamlit as st
+from datetime import datetime, timedelta
+import requests
+import json
+
+
+# Define Class
+class Connection:
+    '''Connection class
+       A class that holds information about the transport means (e.g. the trains) and the times of a connection
+    '''
+    def __init__(self, destination_x, destination_y, departure, arrival, transport_means):
+        '''
+        Connection constructor
+        :param destination_x: the latitude of the destination
+        :param destination_y: the longitude of the destination
+        :param departure: a string containing the datetime for the departure
+        :param arrival: a string containing the datetime for the arrival
+        :param transport_means: a list of the transport means of the connection (e.g. ['IC 5'])
+        '''
+
+        # Create validate input types
+        if (isinstance(destination_x,float) and isinstance(destination_y,float) and
+            isinstance(departure,str) and isinstance(arrival,str) and
+            isinstance(transport_means,list)):
+            # Initialize connection attributes
+            self.destination_x = destination_x
+            self.destination_y = destination_y
+            self.transport_means = transport_means
+
+            # Parse departure and arrival times using dateutil.parser
+            self.departure_time = dateutil.parser.parse(departure.split('+')[0])
+            self.arrival_time = dateutil.parser.parse(arrival.split('+')[0])
+        else:
+            # Raise an attribute error if the input types are not valid
+            raise AttributeError
+
+    def __str__(self):
+        # String representation of the Connection object
+        return "{}: {}->{}".format(self.transport_means, self.departure_time, self.arrival_time)
+
+    def get_unix_departure_time(self):
+        '''
+        Method get_Unix_departure_time
+        Returns the local time of departure as a Unix timestamp
+        '''
+        return int((self.departure_time - datetime(1970,1,1)).total_seconds())
+
+    def get_unix_arrival_time(self):
+        '''
+        Method get_Unix_arrival_time
+        Returns the local time of arrival as a Unix timestamp
+        '''
+        return int((self.arrival_time - datetime(1970,1,1)).total_seconds())
+
+################################################################################
+
+# Define the function to calculate total travel time
+def total_travel_time(connection):
+    departure_time = datetime.fromisoformat(connection['from']['departure'])
+    arrival_time = datetime.fromisoformat(connection['to']['arrival'])
+    return arrival_time - departure_time
+
+# Define the function to get the fastest connection
+def get_fastest_connection(response_json):
+    fastest_time = timedelta(days=1)  # Initialize with a large timedelta
+    fastest_connection = None
+    for connection in response_json['connections']:
+        travel_time = total_travel_time(connection)
+        if travel_time < fastest_time:
+            fastest_time = travel_time
+            fastest_connection = connection
+    return fastest_connection, fastest_time
+
+#################################################################################
+
+# Streamlit App
+def main():
+    # Create streamlit app title
+    st.title("Public Transport Connection App")
+
+    # Input fields for origin, destination, date, and time
+    origin = st.text_input("Point of Departure", value="St. Gallen")
+    destination = st.text_input("Point of Arrival", value="Zürich")
+    date = st.date_input("Date")
+    time = st.time_input("Time of Departure")
+
+    # Build button to trigger connection search
+    if st.button("Search for Connections"):
+        # OpenData API URL for connections
+        url = 'http://transport.opendata.ch/v1/connections'
+
+        # Parameters for the API request
+        params = {
+            'from': origin,
+            'to': destination,
+            'date': date.strftime("%Y-%m-%d"),
+            'time': time.strftime("%H:%M")
+        }
+
+        # Send API request
+        response = requests.get(url, params=params)
+
+        # Check if the request was successful (status code 200)
+        if response.status_code == 200:
+            # Parse JSON response
+            connections = response.json()
+
+            # Check if connections were found
+            if connections.get("connections"):
+                st.subheader("Found Connections:")
+                # Display information for each connection
+                for index, connection in enumerate(connections["connections"], start=1):    #starts an enumiration for connections starting with 1
+                    st.write(f"**Connection {index}:**")    #connection as a key word with {index}
+                    st.write(f"Departure: {connection['from']['departure']}")
+                    st.write(f"Arrival: {connection['to']['arrival']}")
+                    st.write(f"Journey Time: {connection['duration']} Minuten")  # Journey Time
+                    st.write(f"Point of Arrival: {connection['to']['station']['name']}")  # Point of Arrival
+                    for section in connection['sections']:
+                        if section['journey']:
+                            journey = section['journey']
+                            st.write(f"Plattform: {journey['passList'][0]['platform']}")  # Plattform
+                            ("-" * 50) #hyphen to divide the results
+            else:
+                st.write("No Connection Found.")
+        else:
+            st.write("Error Getting Gonnections.")
+
+if __name__ == "__main__":
+    main()
+# End Solution
