@@ -37,4 +37,35 @@ class GoogleRouteFinder:
         else:
             return "No route found"
     
-   
+    def get_via_route(self, start, end, waypoint, departure_time_str):
+        # Parse the departure time string into a datetime object
+        try:
+            departure_time = datetime.strptime(departure_time_str, '%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            return "Invalid departure time format. Please use YYYY-MM-DD HH:MM:SS"
+
+        # Request directions with waypoint
+        directions_result = self.client.directions(start, end, waypoints=[waypoint], departure_time=departure_time)
+
+        # Extract the route information
+        if directions_result:
+            total_distance = 0
+            total_duration = timedelta()
+            for leg in directions_result[0]['legs']:
+                total_distance += leg['distance']['value']  # Summing up distance of all legs
+                total_duration += timedelta(seconds=leg['duration']['value'])  # Summing up duration of all legs
+            
+            expected_arrival_time = departure_time + total_duration
+
+            return {
+                'start_point': start,
+                'waypoint': waypoint,
+                'end_point': end,
+                'date': departure_time.strftime("%Y-%m-%d"),
+                'departure_time': departure_time.strftime("%H:%M:%S"),
+                'expected_arrival_time': expected_arrival_time.strftime("%H:%M:%S"),
+                'total_distance': f"{total_distance/1000:.2f} km",  # Convert to km
+                'total_duration': str(total_duration)
+            }
+        else:
+            return "No route found"
