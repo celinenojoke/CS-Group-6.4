@@ -119,6 +119,7 @@ def main():
                 # Calculate the total travel time
                 total_travel_time = datetime.utcfromtimestamp(waiting_time + total_seconds).strftime('%H:%M:%S')
 
+                # display result values and format to desired format(dd.mm.yyyy, hh:mm:ss)
                 st.write(f"Departure: {departure_time.strftime('%d.%m.%Y %H:%M:%S')}")
                 st.write(f"Arrival: {arrival_time.strftime('%d.%m.%Y %H:%M:%S')}")
                 st.write(f"Point of Arrival: {fastest_connection['to']['station']['name']}")
