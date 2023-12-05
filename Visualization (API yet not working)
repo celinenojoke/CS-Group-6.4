@@ -1,4 +1,5 @@
 # Again, don't forget to download Maps! (pip install streamlit googlemaps)
+# The API I tried to use is called "Maps JavaScript API" and available in the Google Cloud
 import streamlit as st
 import googlemaps
 
