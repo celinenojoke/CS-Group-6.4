@@ -9,6 +9,41 @@ class GoogleRouteFinder:
     def __init__(self):
         self.api_key = os.getenv('GMAP_API_KEY')
         self.client=googlemaps.Client(key=self.api_key)
+
+    # arrival time is when the train arrives
+    # this method calculates the departure time
+    def find_departure_time(self, start, end, arrival_time_str):
+        # Parse the departure time string into a datetime object
+        try:
+            #change arrival time from string to date
+            arrival_time = datetime.strptime(arrival_time_str, '%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            return "Invalid departure time format. Please use YYYY-MM-DD HH:MM:SS"
+
+        # Request directions for a certain arrival time
+        directions_result = self.client.directions(origin=start, destination=end, arrival_time=arrival_time)
+
+        # Extract the route information
+        # check if direction results are empty - if not proceed
+        if directions_result:
+            route = directions_result[0]['legs'][0]
+            print(route)
+            # duration of the route in seconds
+            duration_seconds = route['duration']['value']
+            # arrival time is of format Ymd HMS --> the seconds has to be distracted which should lead to the expected departure time
+            # maybe the departure time can be read out of the route, which would make sense
+            # this has to be tested
+            expected_departure_time = arrival_time - timedelta(seconds=duration_seconds)
+            return {
+                'start_point': route['start_address'],
+                'end_point': route['end_address'],
+                'date': arrival_time.strftime("%Y-%m-%d"),
+                'expected_departure_time': expected_departure_time.strftime("%H:%M:%S"),
+                'distance': route['distance']['text'],
+                'duration': route['duration']['text']
+            }
+        else:
+            return "No route found"
         
     def get_shortest_route(self, start, end, departure_time_str):
         # Parse the departure time string into a datetime object
