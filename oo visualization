@@ -1,0 +1,69 @@
+# First you have to download two things if you haven't already with the following code:
+# pip install streamlit_folium
+# pip install geopy folium
+
+import streamlit as st
+import folium
+from streamlit_folium import folium_static
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut
+
+# Function to get coordinates from a location string
+def get_coordinates(location_str):
+    geolocator = Nominatim(user_agent="my_geocoder")
+    try:
+        location = geolocator.geocode(location_str)
+        if location:
+            return [location.latitude, location.longitude]
+        else:
+            return None
+    except GeocoderTimedOut:
+        st.error("Geocoding service timed out. Please try again.")
+
+# Function to generate route between two points
+def generate_route(start, end, map):
+    route = folium.PolyLine(locations=[start, end], color='blue', weight=5)
+    map.add_child(route)
+
+# Function to generate map with markers and routes
+def generate_map(start_location_train, start_location_car, optimal_destination):
+    # Create a map centered at the meeting point
+    map_center = meeting_point
+    my_map = folium.Map(location=map_center, zoom_start=12)
+
+    # Add markers for starting points A and B, meeting point, and destination
+    folium.Marker(location=start_location_train, popup='Starting Point Train', icon=folium.Icon(color='green')).add_to(my_map)
+    folium.Marker(location=start_location_car, popup='Starting Point Car', icon=folium.Icon(color='green')).add_to(my_map)
+    folium.Marker(location=optimal_destination, popup='Optimal Destination', icon=folium.Icon(color='red')).add_to(my_map)
+
+    # Generate routes from starting points A and B to the meeting point
+    generate_route(start_location_train, optimal_destination, my_map)
+    generate_route(start_location_car, optimal_destination, my_map)
+
+    return my_map
+
+# The following part is only partial relevant for our code, because now it also
+# contains code for interacting with the user
+# Streamlit UI
+st.title("Route Planning with OpenStreetMap")
+
+# Input for Starting Point A
+start_A_str = st.text_input("Enter Starting Point A:", "San Francisco, CA")
+start_A = get_coordinates(start_A_str)
+
+# Input for Starting Point B
+start_B_str = st.text_input("Enter Starting Point B:", "Los Angeles, CA")
+start_B = get_coordinates(start_B_str)
+
+# Input for Meeting Point
+meeting_point_str = st.text_input("Enter Meeting Point:", "San Jose, CA")
+meeting_point = get_coordinates(meeting_point_str)
+
+
+# Check if coordinates are valid
+if start_A and start_B and meeting_point:
+    # Display the map
+    my_map = generate_map(start_A, start_B, meeting_point)
+    folium_static(my_map)
+else:
+    st.warning("Please enter valid locations.")
