@@ -1,0 +1,59 @@
+import requests
+import dateutil.parser
+from datetime import datetime
+
+# Define Class
+class Connection:
+    def __init__(self, destination_x, destination_y, departure, arrival, transport_means):
+        if (isinstance(destination_x, float) and isinstance(destination_y, float) and
+                isinstance(departure, str) and isinstance(arrival, str) and
+                isinstance(transport_means, list)):
+            # Set the x and y coordingates, means of transport, and time
+            
+            self.destination_x = destination_x 
+            self.destination_y = destination_y
+            self.transport_means = transport_means
+            self.departure_time = dateutil.parser.parse(departure.split('+')[0])
+            self.arrival_time = dateutil.parser.parse(arrival.split('+')[0])
+        else:
+            raise AttributeError
+
+    def __str__(self):
+        # Return a string representation of the connection
+        return "{}: {}->{}".format(self.transport_means, self.departure_time, self.arrival_time)
+
+    def get_unix_departure_time(self):
+        # Get the Unix timestamp of the departure time
+        return int((self.departure_time - datetime(1970, 1, 1)).total_seconds())
+
+    def get_unix_arrival_time(self):
+        # Get the Unix timestamp of the arrival time
+        return int((self.arrival_time - datetime(1970, 1, 1)).total_seconds())
+
+def find_connections_and_stations(start_location, destinations, departure_time_str):
+    stations_on_routes = []
+    for destination in destinations:
+        url = 'http://transport.opendata.ch/v1/connections'
+        params = {
+            'from': start_location,
+            'to': destination,
+            # Extract the date and time from the departure date + time
+            'date': departure_time_str.split(' ')[0],
+            'time': departure_time_str.split(' ')[1]
+        }
+        # Send a GET request to the transport API
+        response = requests.get(url, params=params)
+        # Check if the request was successful and if so return connections
+        if response.status_code == 200:
+            connections = response.json().get("connections", [])
+            for connection in connections:
+                for section in connection.get('sections', []):
+                    if 'journey' in section and 'passList' in section['journey']:
+                        for stop in section['journey']['passList']:
+                            # Get the name of the station
+                            station_name = stop['station']['name']  
+                            # Add the station to the list if it's not already there
+                            if station_name not in stations_on_routes:
+                                stations_on_routes.append(station_name)
+    # Return the list of stations on the routes
+    return stations_on_routes  
